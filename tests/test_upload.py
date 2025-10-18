@@ -1,24 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
-from app.main import app
-from pathlib import Path
-import subprocess
-
-root = Path(__file__).parent
-gen_data_script = root.parent / "scripts" / "gen_dummy_data.py"
-test_data_dir = root / "data"
-
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-@pytest.fixture(scope="session")
-def large_csv_path():
-    # Generate large dummy data if not already present
-    output_file = test_data_dir / "dummy_transactions.csv"
-    if not output_file.exists():
-        subprocess.run(["python", str(gen_data_script)], check=True)
-    return output_file
 
 def test_health_check(client):
     response = client.get("/")
@@ -65,10 +44,9 @@ def test_upload_small_csv_success(client, tmp_path):
     assert "timetaken_ms" in json_response
     assert json_response["rows_processed"] == 2
 
-def test_upload_large_csv_success(client):
-    large_csv = test_data_dir / "dummy_transactions.csv"
-    with open(large_csv, "rb") as f:
-        response = client.post("/upload/", files={"file": ("dummy_transactions.csv", f, "text/csv")})
+def test_upload_large_csv_success(client, large_csv_path):
+    with open(large_csv_path, "rb") as f:
+        response = client.post("/upload/", files={"file":  f, })
 
     assert response.status_code == 200
     json_response = response.json()
