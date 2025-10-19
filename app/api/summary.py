@@ -10,9 +10,9 @@ router = APIRouter(prefix="/summary", tags=["summary"])
 async def get_summary(
     user_id: int = Path(..., ge=1, description="User_id"),
     start_date: datetime = Query(
-        ..., description="Inclusive start date for transactions"
+        ..., description="Inclusive start date for transactions: YYYY-MM-DDTHH:MM:SS"
     ),
-    end_date: datetime = Query(..., description="Inclusive end date for transactions"),
+    end_date: datetime = Query(..., description="Inclusive end date for transactions: YYYY-MM-DDTHH:MM:SS"),
 ) -> SummaryResponse:
     """
     Endpoint to get summary statistics for a given user_id and date range.
