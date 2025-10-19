@@ -1,7 +1,7 @@
 import csv
 import random
 from pathlib import Path
-from faker import Faker
+from faker import Faker #type: ignore
 
 TRANSACTIONS = 1_000_000
 HEADERS = ["transaction_id", "user_id", "product_id", "timestamp", "transaction_amount"]
