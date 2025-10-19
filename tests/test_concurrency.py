@@ -4,7 +4,7 @@ from app.main import app
 import asyncio
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 async def async_client():
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -12,7 +12,7 @@ async def async_client():
         yield ac
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 async def uploaded_data(async_client):
     # Upload sample data before running concurrency tests
     csv_content = (
