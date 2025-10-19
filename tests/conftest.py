@@ -8,9 +8,11 @@ root = Path(__file__).parent
 gen_data_script = root.parent / "scripts" / "gen_dummy_data.py"
 test_data_dir = root / "data"
 
+
 @pytest.fixture(scope="session")
 def client():
     return TestClient(app)
+
 
 @pytest.fixture(scope="session")
 def large_csv_path():

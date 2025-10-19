@@ -1,7 +1,8 @@
-from httpx import ASGITransport,AsyncClient
+from httpx import ASGITransport, AsyncClient
 import pytest
 from app.main import app
 import asyncio
+
 
 @pytest.fixture(scope="module")
 async def async_client():
@@ -9,6 +10,8 @@ async def async_client():
         transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
         yield ac
+
+
 @pytest.fixture(scope="module")
 async def uploaded_data(async_client):
     # Upload sample data before running concurrency tests
@@ -27,23 +30,25 @@ async def uploaded_data(async_client):
     assert response.status_code == 200
     return response
 
+
 @pytest.mark.anyio
 async def test_root(async_client):
     response = await async_client.get("/")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
-@pytest.mark.anyio 
+
+@pytest.mark.anyio
 async def test_concurrent_summary_requests(async_client):
     user_ids = [200, 201, 202, 203, 204]
     start_date = "2020-01-01T00:00:00"
     end_date = "2025-12-31T23:59:59"
 
     async def fetch_summary(user_id):
-        response = await async_client.get(f"/summary/{user_id}", params={
-            "start_date": start_date,
-            "end_date": end_date
-        })
+        response = await async_client.get(
+            f"/summary/{user_id}",
+            params={"start_date": start_date, "end_date": end_date},
+        )
         return response
 
     tasks = [fetch_summary(uid) for uid in user_ids]
@@ -52,35 +57,49 @@ async def test_concurrent_summary_requests(async_client):
     for response in responses:
         assert response.status_code == (200)
 
+
 @pytest.mark.anyio
-async def upload_and_fetch_summary(async_client,large_csv_path):
+async def upload_and_fetch_summary(async_client, large_csv_path):
     # Upload large CSV file
     with open(large_csv_path, "rb") as f:
-        upload_response = await async_client.post("/upload/", files={"file":  f, })
+        upload_response = await async_client.post(
+            "/upload/",
+            files={
+                "file": f,
+            },
+        )
     assert upload_response.status_code == 200
 
     # Fetch summary for a specific user
     user_id = 100
     start_date = "2020-01-01T00:00:00"
     end_date = "2025-12-31T23:59:59"
-    summary_response = await async_client.get(f"/summary/{user_id}", params={
-        "start_date": start_date,
-        "end_date": end_date
-    })
+    summary_response = await async_client.get(
+        f"/summary/{user_id}", params={"start_date": start_date, "end_date": end_date}
+    )
     assert summary_response.status_code == 200
+
     async def summary_task():
         tasks = []
         for _ in range(5):
-            tasks.append(async_client.get(f"/summary/{user_id}", params={
-                "start_date": start_date,
-                "end_date": end_date
-            }))
+            tasks.append(
+                async_client.get(
+                    f"/summary/{user_id}",
+                    params={"start_date": start_date, "end_date": end_date},
+                )
+            )
         responses = await asyncio.gather(*tasks)
         for response in responses:
             assert response.status_code == 200
-    
+
     async def upload_task():
         with open(large_csv_path, "rb") as f:
-            response = await async_client.post("/upload/", files={"file":  f, })
+            response = await async_client.post(
+                "/upload/",
+                files={
+                    "file": f,
+                },
+            )
         assert response.status_code == 200
+
     await asyncio.gather(summary_task(), upload_task())

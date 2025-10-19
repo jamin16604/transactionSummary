@@ -9,22 +9,29 @@ from app.storage import load_csv
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
-@router.post("/",response_model=UploadResponse)
-async def upload_csv(file: UploadFile = File(..., description="CSV file containing transaction data"))-> UploadResponse:
+
+@router.post("/", response_model=UploadResponse)
+async def upload_csv(
+    file: UploadFile = File(..., description="CSV file containing transaction data")
+) -> UploadResponse:
     """
     Endpoint to upload a CSV file containing transaction data.
     Validates the file type and headers before loading data into the database.
     """
     # Validate file type
-    if not (file.filename and file.filename.lower().endswith('.csv')):
-        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV file.")
+    if not (file.filename and file.filename.lower().endswith(".csv")):
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Please upload a CSV file."
+        )
     # Read CSV content
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv", mode="wb") as temp_file:
+    with tempfile.NamedTemporaryFile(
+        delete=False, suffix=".csv", mode="wb"
+    ) as temp_file:
         head = await file.read(4096)
         temp_file.write(head)
         try:
-            #Decode only the head for header validation
-            decoded_head = head.decode('utf-8').splitlines()[0]
+            # Decode only the head for header validation
+            decoded_head = head.decode("utf-8").splitlines()[0]
             headers = set(next(csv.reader([decoded_head])))
             validate_headers(headers)
         except Exception as e:

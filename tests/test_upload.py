@@ -1,8 +1,8 @@
-
 def test_health_check(client):
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
 
 def test_upload_csv_invalid_file(client, tmp_path):
     # Create a dummy non-CSV file
@@ -10,21 +10,29 @@ def test_upload_csv_invalid_file(client, tmp_path):
     invalid_file_path.write_text("This is not a CSV file.")
 
     with open(invalid_file_path, "rb") as f:
-        response = client.post("/upload/", files={"file": ("test.txt", f, "text/plain")})
+        response = client.post(
+            "/upload/", files={"file": ("test.txt", f, "text/plain")}
+        )
 
     assert response.status_code == 400
     assert response.json() == {"detail": "Invalid file type. Please upload a CSV file."}
 
+
 def test_upload_csv_missing_headers(client, tmp_path):
     # Create a dummy CSV file with missing headers
     invalid_csv_path = tmp_path / "invalid.csv"
-    invalid_csv_path.write_text("transaction_id,wrong_header1,wrong_header2\nvalue1,value2")
+    invalid_csv_path.write_text(
+        "transaction_id,wrong_header1,wrong_header2\nvalue1,value2"
+    )
 
     with open(invalid_csv_path, "rb") as f:
-        response = client.post("/upload/", files={"file": ("invalid.csv", f, "text/csv")})
+        response = client.post(
+            "/upload/", files={"file": ("invalid.csv", f, "text/csv")}
+        )
 
     assert response.status_code == 400
     assert "Missing required headers" in response.json()["detail"]
+
 
 def test_upload_small_csv_success(client, tmp_path):
     # Create a dummy valid CSV file
@@ -44,13 +52,18 @@ def test_upload_small_csv_success(client, tmp_path):
     assert "timetaken_ms" in json_response
     assert json_response["rows_processed"] == 2
 
+
 def test_upload_large_csv_success(client, large_csv_path):
     with open(large_csv_path, "rb") as f:
-        response = client.post("/upload/", files={"file":  f, })
+        response = client.post(
+            "/upload/",
+            files={
+                "file": f,
+            },
+        )
 
     assert response.status_code == 200
     json_response = response.json()
     assert "rows_processed" in json_response
     assert "timetaken_ms" in json_response
     assert json_response["rows_processed"] == 1_000_000
-

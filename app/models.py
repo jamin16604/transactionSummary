@@ -6,6 +6,7 @@ class UploadResponse(BaseModel):
     rows_processed: int
     timetaken_ms: int
 
+
 class SummaryResponse(BaseModel):
     user_id: int
     max_transaction_amount: float
